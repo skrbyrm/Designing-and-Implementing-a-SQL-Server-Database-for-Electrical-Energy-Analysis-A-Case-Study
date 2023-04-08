@@ -1,12 +1,3 @@
-USE [cons]
-GO
-
-/****** Object:  StoredProcedure [dbo].[daily_by_ssno]    Script Date: 4/8/2023 7:40:40 PM ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
 
 CREATE OR ALTER   PROCEDURE [dbo].[daily_by_ssno]
     @meterid int
