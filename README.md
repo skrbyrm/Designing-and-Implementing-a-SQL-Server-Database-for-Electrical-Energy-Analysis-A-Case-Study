@@ -186,3 +186,41 @@ This stored procedure has the following main functionality:
 - It inserts the data from the `@temp_month` table variable into the `data_by_months` table, with `userId` set to the value of the variable `@userId`.
 - It fetches the next row of data from the `monthly_cursor` and repeats steps until there is no more data to fetch.
 -------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------
+
+### Trigger
+
+```
+CREATE OR ALTER TRIGGER [dbo].[update_all_trigger]
+ON [dbo].[consumptions]
+AFTER INSERT, UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+    EXEC sp_msforeachtable "ALTER TABLE ? NOCHECK CONSTRAINT all";
+    EXEC proc_data_by_months;
+    EXEC proc_data_by_weeks;
+    EXEC proc_data_by_dates;
+    EXEC proc_data_by_hours;
+    EXEC sp_msforeachtable "ALTER TABLE ? CHECK CONSTRAINT all";
+END
+GO
+
+ALTER TABLE [dbo].[consumptions] ENABLE TRIGGER [update_all_trigger]
+GO
+```
+
+This T-SQL trigger named `"update_all_trigger"` is created or altered to run on the `"consumptions"` table in the "dbo" schema. The trigger fires after an insert or update operation is performed on the table.
+
+The trigger contains a series of T-SQL statements that perform various data processing tasks, including:
+
+- Disabling all constraints on all tables in the database using the `sp_msforeachtable system stored procedure`.
+- Calling several `user-defined procedures` named `"proc_data_by_months"`, `"proc_data_by_weeks"`, `"proc_data_by_dates"`, and `"proc_data_by_hours"` that process data in the `"consumptions"` table based on different time intervals.
+- Enabling all constraints on all tables in the database using the `sp_msforeachtable` system stored procedure.
+
+The `SET NOCOUNT ON` statement is used to prevent the sending of the count of the number of rows affected by the trigger.
+
+The `ALTER TABLE` statement at the end of the trigger enables the trigger to fire for the `"consumptions"` table.
+
+Overall, this trigger performs data processing tasks on the `"consumptions"` table in the `"dbo"` schema, with the aim of updating data based on different time intervals. It disables all constraints before performing the data processing and then re-enables them afterward.
+
