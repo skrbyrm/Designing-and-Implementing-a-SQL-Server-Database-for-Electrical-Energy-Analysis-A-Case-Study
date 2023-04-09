@@ -224,3 +224,40 @@ The `ALTER TABLE` statement at the end of the trigger enables the trigger to fir
 
 Overall, this trigger performs data processing tasks on the `"consumptions"` table in the `"dbo"` schema, with the aim of updating data based on different time intervals. It disables all constraints before performing the data processing and then re-enables them afterward.
 
+### SQL Server Indexes
+Indexes in SQL Server are database structures that help improve the performance of database queries by allowing the database engine to quickly locate data within a table. They can be created on one or more columns of a table and are organized in a B-tree structure that supports efficient data retrieval operations. Indexes can speed up queries that use the indexed columns in the WHERE, JOIN, and ORDER BY clauses, but can also slow down data modification operations such as INSERT, UPDATE, and DELETE.
+
+Run query before Index:
+
+When running the SELECT query, the following message was received: `"Table 'consumptions'. Scan count 1, logical reads 917, physical reads 0 etc."`. This indicates that the query was performing a full table scan and accessing a large number of pages in the buffer cache.
+
+![](https://github.com/skrbyrm/Designing-and-Implementing-a-SQL-Server-Database-for-Electrical-Energy-Analysis-A-Case-Study/blob/main/ss1.png)
+
+Click! `Display Estimated Execution Plan` "Display Estimated Execution Plan" is a feature in SQL Server Management Studio (SSMS) that allows you to view an estimated execution plan for a Transact-SQL (T-SQL) query.
+
+An execution plan shows how SQL Server will execute a query, including the order in which it will read tables, join data, apply filters, and retrieve data. The estimated execution plan is based on SQL Server's query optimizer and provides insight into how the optimizer will execute the query.
+Analyzing the estimated execution plan can help you identify performance issues in your queries, such as missing indexes, inefficient joins, or excessive data scans. By understanding how SQL Server is executing your queries, you can make informed decisions about how to optimize them for better performance.
+
+Here is `Display Estimated Execution Plan` result:
+```
+/*
+Missing Index Details from SQLQuery1.sql - <HOST>.cons (sa (55))
+The Query Processor estimates that implementing the following index could improve the query cost by 97.81%.
+*/
+
+
+USE [cons]
+GO
+CREATE NONCLUSTERED INDEX [ssno_Index, sysname]
+ON [dbo].[consumptions] ([ssno])
+INCLUDE ([date],[active],[inductive],[capacitive],[hno],[facility_id],
+	[createdAt],[updatedAt])
+GO
+```
+After creating and rebuilding the `NONCLUSTERED INDEX`, the `SELECT` query was rerun and the following message was received: `"Table 'consumptions'. Scan count 1, logical reads 27, physical reads 0 etc. "`. This indicates that the query was able to use the index to quickly locate the relevant rows and access a much smaller number of pages in the buffer cache.
+
+![](https://github.com/skrbyrm/Designing-and-Implementing-a-SQL-Server-Database-for-Electrical-Energy-Analysis-A-Case-Study/blob/main/ss3.png)
+
+By creating and adding the nonclustered index on the ssno column of the consumptions table, the performance of the `SELECT` query was significantly improved. This demonstrates the importance of proper indexing in optimizing database performance.
+
+
