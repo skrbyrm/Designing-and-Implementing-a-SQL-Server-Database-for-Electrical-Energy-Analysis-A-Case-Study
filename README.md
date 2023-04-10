@@ -1,6 +1,63 @@
 # Data Analysis and Reporting with SQL SERVER
 ## Designing and Implementing a SQL Server Database for Electrical Energy Analysis: A Case Study
+In this project, we present a case study of designing and implementing a SQL Server database for electrical energy analysis. Additionally, we include `stored procedures` to process the data by date, hour, and month. Finally, we present a `trigger` script to update all reports when a new entry is added to the consumptions table. In this repository, we provide a `Dockerfile` to set up an instance of SQL Server 2019 with some configuration options and a user with administrative privileges. The repository also includes an overview of the scripts and stored procedures included in this project. 
 
+---------
+### Install SQL Server on Linux using Docker
+
+This Dockerfile sets up an instance of `SQL Server 2019` with some configuration options and a user with administrative privileges. It also creates a database directory, sets environment variables for SQL Server, enables remote connections, adds a volume for data persistence, and exposes port 1433.
+
+To build the Docker image, `run docker build -t sqlserver .`. To run the container, use `docker run -d -p 1433:1433 -v my_sql_data:/var/opt/mssql/data sqlserver`.
+```
+FROM mcr.microsoft.com/mssql/server:2019-latest
+
+# Set environment variables for SQL Server instance
+ENV SA_PASSWORD=cGFzc3dvcmQ=
+ENV ACCEPT_EULA=Y
+
+# Create a database directory
+RUN mkdir -p /var/opt/mssql/data
+
+# Grant permissions to the database directory
+RUN chmod -R g=u /var/opt/mssql/data
+
+# Create a new user with admin privileges
+ENV MSSQL_PID=Developer
+ENV MSSQL_AGENT_ENABLED=true
+ENV MSSQL_COLLATION=SQL_Latin1_General_CP1_CI_AS
+ENV MSSQL_TCP_PORT=1433
+ENV MSSQL_LCID=1033
+ENV MSSQL_MEMORY_LIMIT_MB=2048
+ENV MSSQL_USERNAME=worker
+ENV MSSQL_PASSWORD=cGFzc3dvcmQ=
+ENV MSSQL_USER_HOME=/home/worker
+
+USER root
+RUN useradd -u 10101 -m -s /bin/bash -p $(openssl passwd -1 ${MSSQL_PASSWORD}) ${MSSQL_USERNAME}
+RUN usermod -aG sudo ${MSSQL_USERNAME}
+
+# Enable remote connections
+RUN echo 'export MSSQL_PID=Developer' >> ~/.bashrc
+RUN echo 'export MSSQL_TCP_PORT=1433' >> ~/.bashrc
+RUN echo 'export MSSQL_COLLATION=SQL_Latin1_General_CP1_CI_AS' >> ~/.bashrc
+RUN echo 'export MSSQL_LCID=1033' >> ~/.bashrc
+RUN echo 'export MSSQL_USER_HOME=/home/newuser' >> ~/.bashrc
+RUN echo 'export ACCEPT_EULA=Y' >> ~/.bashrc
+RUN echo 'export SA_PASSWORD=ODcxNzYxNUJhcy4=' >> ~/.bashrc
+
+# Add a volume to persist data
+VOLUME /var/opt/mssql/data
+
+# Expose the SQL Server port
+EXPOSE 1433
+
+# Start SQL Server
+CMD /opt/mssql/bin/sqlservr
+```
+
+Note that the `SA_PASSWORD` environment variable is set to password and the password has been encoded with `base64`. To change the password, you can replace password with a new password and encode it with base64 using `echo -n "password" | base64`.
+
+---------------------------------------------------------------------------------------------------------------
 This project consists of several SQL scripts for analyzing and reporting data from a consumptions table with the following schema:
 Base Table
 ```
@@ -22,9 +79,8 @@ CREATE TABLE [dbo].[consumptions](
 
 ```
 
-The scripts generate reports in various time intervals, such as hourly, daily, weekly, and monthly. They also include procedures to process the data by date, hour, and month. Finally, there is a trigger script to update all reports when a new entry is added to the consumptions table.
-
 ### Scripts
+The scripts generate reports in various time intervals, such as hourly, daily, weekly, and monthly. They also include procedures to process the data by date, hour, and month. Finally, there is a trigger script to update all reports when a new entry is added to the consumptions table.
 
   - `daily_by_ssno.sql`: Generates a report of daily consumption by ssno.
   - `hourly_by_ssno.sql`: Generates a report of hourly consumption by ssno.
